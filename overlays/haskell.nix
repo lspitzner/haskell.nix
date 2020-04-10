@@ -545,7 +545,7 @@ in {
         };
 
         haskellNixRoots' = ifdLevel:
-            let filterSupportedGhc = final.lib.filterAttrs (n: _: n == "ghc865" || n == "ghc883");
+            let filterSupportedGhc = final.lib.filterAttrs (n: _: n == "ghc865" || n == "ghc883" || n == "ghc8101");
           in final.recurseIntoAttrs ({
             # Things that require no IFD to build
             inherit (final.buildPackages.haskell-nix) nix-tools source-pins;
@@ -560,6 +560,7 @@ in {
             hscolour = final.buildPackages.haskell-nix.bootstrap.packages.hscolour;
             ghc865 = final.buildPackages.haskell-nix.compiler.ghc865;
             ghc883 = final.buildPackages.haskell-nix.compiler.ghc883;
+            ghc8101 = final.buildPackages.haskell-nix.compiler.ghc8101;
             ghc-boot-packages-nix = final.recurseIntoAttrs
               (builtins.mapAttrs (_: final.recurseIntoAttrs)
                 (filterSupportedGhc final.ghc-boot-packages-nix));
