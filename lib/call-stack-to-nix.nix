@@ -8,7 +8,12 @@
 { runCommand, nix-tools, pkgs, mkCacheFile, materialize }:
 { name ? src.name or null # optional name for better error messages
 , src
-, stackYaml ? null
+, stackYamlName ? null # file name relative to $src
+, stackYamlFile ? null # absolute file name (still a string)
+  # precedence is
+  # 1) if stackYamlFile != null, use that
+  # 2) if stackYamlName != null, use $src/$stackYamlName
+  # 3) otherwise               , use $src/stack.yaml
 , ignorePackageYaml ? false
 , cache ? null
 , stack-sha256 ? null
@@ -18,7 +23,11 @@
 let
   stackToNixArgs = builtins.concatStringsSep " " [
     "--full"
-    "--stack-yaml=${src}/${if stackYaml == null then "stack.yaml" else stackYaml}"
+    "--stack-yaml=${if stackYamlFile != null
+      then builtins.toString stackYamlFile
+      else if stackYamlName != null
+      then "${src}/${stackYamlName}"
+      else "${src}/stack.yaml"}"
     (if ignorePackageYaml then "--ignore-package-yaml" else "")
     "-o ."
   ];
@@ -42,12 +51,16 @@ let
     cp ${mkCacheFile cache}/.stack-to-nix.cache* $out
   '' + ''
     (cd $out && stack-to-nix ${stackToNixArgs})
-
+  '' + ( # this is a bit of a hack to avoid a warning - it assumes you would
+         # only use stackYamlFile if it is not in the $src dir, so there is
+         # nothing to replace.
+    if stackYamlFile != null then "" else ''
     # We need to strip out any references to $src, as those won't
     # be accessable in restricted mode.
     for nixf in $(find $out -name "*.nix" -type f); do
       substituteInPlace $nixf --replace "${src}" "."
     done
+  '') + ''
 
     # move pkgs.nix to default.nix ensure we can just nix `import` the result.
     mv $out/pkgs.nix $out/default.nix
