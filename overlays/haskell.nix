@@ -295,6 +295,34 @@ in {
             cabal-to-nix "${src}" "${src}/${cabal-file}" > "$out"
             '';
 
+        callCabalToNixWithoutSrc = { name, cabal-file ? "${name}.cabal" }:
+            final.buildPackages.pkgs.runCommand "${name}.nix" {
+                nativeBuildInputs = [ final.buildPackages.haskell-nix.nix-tools ];
+
+                LOCALE_ARCHIVE = final.lib.optionalString (final.stdenv.buildPlatform.libc == "glibc") "${final.buildPackages.glibcLocales}/lib/locale/locale-archive";
+                LANG = "en_US.UTF-8";
+                LC_ALL = "en_US.UTF-8";
+            } ''
+            cabal-to-nix "${cabal-file}" > "$out"
+            '';
+
+        cabalFileToStackagePlan = { name, src, resolver, cabal-file ? "${src}/${name}.cabal"}:
+          let desc = import (
+                callCabalToNixWithoutSrc {
+                  name = "${name}-desc";
+                  inherit cabal-file;
+                }
+              );
+          in {
+            inherit resolver;
+            extras = hackage:
+              { ${name} = args: desc args // {
+                src = cleanSourceHaskell {
+                  inherit name src;
+                };
+              };
+            };
+          };
 
         # Given a single cache entry:
         # { name = ...; url = ...; rev = ...; ref = ...; sha256 = ...; cabal-file = ...; type = ...; is-private = ...; }
