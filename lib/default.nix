@@ -189,6 +189,8 @@ with haskellLib;
     inherit stdenv lib haskellLib srcOnly;
   };
 
+  cabal-check = import ./cabal-check.nix;
+
   # Use `isCrossHost` to identify when we are cross compiling and
   # the code we are producing will not run on the build system
   # without an emulator.
