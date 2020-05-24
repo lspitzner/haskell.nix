@@ -295,7 +295,7 @@ in {
             cabal-to-nix "${src}" "${src}/${cabal-file}" > "$out"
             '';
 
-        callCabalToNixWithoutSrc = { name, cabal-file ? "${name}.cabal" }:
+        callCabalToNixWithSrcSubstitution = { name, src, cabal-file ? "${name}.cabal" }:
             final.buildPackages.pkgs.runCommand "${name}.nix" {
                 nativeBuildInputs = [ final.buildPackages.haskell-nix.nix-tools ];
 
@@ -303,23 +303,34 @@ in {
                 LANG = "en_US.UTF-8";
                 LC_ALL = "en_US.UTF-8";
             } ''
-            cabal-to-nix "${cabal-file}" > "$out"
+            cabal-to-nix "${src}" "${cabal-file}" > "$out"
+
+            # We need to strip out any references to $src, as those won't
+            # be accessable in restricted mode.
+
+            substituteInPlace $out --replace "${src}" "./."
             '';
 
-        cabalFileToStackagePlan = { name, src, resolver, cabal-file ? "${src}/${name}.cabal"}:
-          let desc = import (
-                callCabalToNixWithoutSrc {
+        cabalFileToStackagePlan = { name, src, resolver, cabal-file ? null}:
+          let srcIsPathCheck = x: if builtins.typeOf src == "path" then x else trace "warn: cabalFileToStackagePlan: src should be a plain path, otherwise the plan may start depending on too much stuff" x;
+              cleanedSource = srcIsPathCheck (cleanSourceHaskell {
+                name = "${name}-clean";
+                inherit src;
+              });
+              desc = import (
+                callCabalToNixWithSrcSubstitution {
                   name = "${name}-desc";
-                  inherit cabal-file;
+                  src = cleanedSource;
+                  cabal-file = if cabal-file != null
+                    then cabal-file
+                    else "${cleanedSource}/${name}.cabal";
                 }
               );
           in {
             inherit resolver;
             extras = hackage:
               { ${name} = args: desc args // {
-                src = cleanSourceHaskell {
-                  inherit name src;
-                };
+                src = cleanedSource;
               };
             };
           };
