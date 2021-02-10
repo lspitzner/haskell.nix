@@ -1,9 +1,9 @@
 {
   "url": "https://github.com/input-output-hk/hackage.nix",
-  "rev": "3c6b6e040a6c65740a659c0ccefb501155acf086",
-  "date": "2021-01-13T01:13:54+00:00",
-  "path": "/nix/store/zwyragc94fqsd26pmwgmrzyd19nx6h2i-hackage.nix-3c6b6e0",
-  "sha256": "1mdawpvw2nnlr9jqmxwv5m3p86gcbzzbjiyzpims23zy3wacr8c0",
+  "rev": "848cd2e840a6cc9ea11108d468fd9cd5fa12ab06",
+  "date": "2021-02-10T01:11:00+00:00",
+  "path": "/nix/store/daab1587b53ihlxr4lx8rw8yfp1681rx-hackage.nix-848cd2e",
+  "sha256": "1awg54wyq2v9qds14wrrmxhh5y4xzrs2fvzmip3ywd3qq50ld54r",
   "fetchSubmodules": false,
   "deepClone": false,
   "leaveDotGit": false
